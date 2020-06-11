@@ -328,6 +328,12 @@ Pipe::SyncResult DeviceIoPipes::SyncAll(std::chrono::milliseconds timeout)
 	return syncReadResult;
 }
 
+void DeviceIoPipes::CancelRead()
+{
+	std::scoped_lock lock(m_mutexRead);
+	m_pipeRead.CancelOp();
+}
+
 DeviceIoPipes& DeviceIoPipes::operator =(DeviceIoPipes&& other)
 {
 	std::scoped_lock lock(m_mutexRead, m_mutexWrite, other.m_mutexRead, other.m_mutexWrite);

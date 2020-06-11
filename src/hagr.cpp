@@ -47,7 +47,10 @@ DWORD __stdcall _XInputGetState(
 	__out XINPUT_STATE* pState)
 {
 	if (!g_proAgent->IsDeviceValid() || dwUserIndex > 0)
+	{
+		dbgPrint("XInputGetState disconnected %d\n", dwUserIndex);
 		return ERROR_DEVICE_NOT_CONNECTED;
+	}
 
 	const bool result = g_proAgent->GetCachedState(*pState);
 	dbgPrint("XInputGetState %d %04X %08X\n", result, pState->dwPacketNumber, pState->Gamepad.wButtons);
@@ -124,7 +127,10 @@ DWORD __stdcall _XInputGetBatteryInformation(
 	__out XINPUT_BATTERY_INFORMATION* pBatteryInformation)
 {
 	if (!g_proAgent->IsDeviceValid() || dwUserIndex > 0 || devType != BATTERY_DEVTYPE_GAMEPAD)
+	{
+		dbgPrint("XInputGetBatteryInformation disconnected %d\n", dwUserIndex);
 		return ERROR_DEVICE_NOT_CONNECTED;
+	}
 
 	const bool result = g_proAgent->GetBatteryInfo(*pBatteryInformation);
 	dbgPrint("XInputGetBatteryInformation %d %02X %02X\n", result, pBatteryInformation->BatteryType, pBatteryInformation->BatteryLevel);

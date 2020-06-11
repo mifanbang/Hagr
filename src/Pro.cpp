@@ -175,12 +175,21 @@ bool ReadUntil(DeviceIoPipes& pipes, const F& func)
 }
 
 
+bool WaitForDeviceFullStatesPacket(DeviceIoPipes& pipes)
+{
+	return ReadUntil(pipes, [](const Packet& packet) {
+		const bool found = packet.type == PacketType::Device_FullStates;
+		return !found;  // return true to continue reading
+	} );
+}
+
+
 bool WaitForDeviceCommandReply(DeviceIoPipes& pipes, HostSubPacket::CommandCode cmd)
 {
 	return ReadUntil(pipes, [cmd](const Packet& packet) {
 		const bool found = packet.type == PacketType::Device_CommandReply &&
 			packet.GetSubPacket<PacketType::Device_CommandReply>().cmdCode == cmd;
-		return !found;  // return true for mismatches
+		return !found;  // return true for continue reading
 	} );
 }
 
@@ -190,7 +199,7 @@ bool WaitForDeviceSubcommandReply(DeviceIoPipes& pipes, HostSubPacket::Subcomman
 	return ReadUntil(pipes, [subcmd](const Packet& packet) {
 		const bool found = packet.type == PacketType::Device_SubcommandReply &&
 			packet.GetSubPacket<PacketType::Device_SubcommandReply>().subcmdCode == subcmd;
-		return !found;  // return true for mismatches
+		return !found;  // return true for continue reading
 	} );
 }
 
@@ -476,7 +485,11 @@ bool ProAgent::ReattachToDevice()
 	{
 		DeviceIoPipes newDevicePipes(std::move(newDeviceFile), k_pipeParams);
 		m_devPipes = std::move(newDevicePipes);
-		InitDevice();
+		if (!WaitForDeviceFullStatesPacket(m_devPipes))
+		{
+			m_devPipes.CancelRead();
+			InitDevice();
+		}
 
 		return true;
 	}
@@ -521,7 +534,7 @@ bool ProAgent::InitDevice()
 void ProAgent::WorkerThreadProc()
 {
 	if (m_devPipes.IsFileValid())
-		InitDevice();
+		ReattachToDevice();
 
 	while (!m_workerStopSignal)
 	{

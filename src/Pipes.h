@@ -96,6 +96,7 @@ public:
 	~Pipe();
 
 	SyncResult Sync(std::chrono::milliseconds timeout);  // return false if file is not valid or timed out
+	void CancelOp();
 
 	bool IsOpExecuting() const;
 	unsigned int GetBufferSize() const;
@@ -107,7 +108,6 @@ public:
 protected:
 	class Helper;
 
-	void CancelOp();
 	void Close();  // cancel running overlapped operation and relese some resources. the file would still be open.
 
 
@@ -171,6 +171,7 @@ public:
 	Pipe::SyncResult SyncRead(std::chrono::milliseconds timeout);
 	Pipe::SyncResult SyncWrite(std::chrono::milliseconds timeout);
 	Pipe::SyncResult SyncAll(std::chrono::milliseconds timeout);
+	void CancelRead();
 
 	DeviceIoPipes& operator =(DeviceIoPipes&& other);
 	void Close();
