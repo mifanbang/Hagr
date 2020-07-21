@@ -33,7 +33,11 @@
 namespace
 {
 
-ProAgent* g_proAgent = nullptr;
+ProAgent& GetProAgent()
+{
+	static ProAgent s_proAgent;
+	return s_proAgent;
+}
 
 }  // unnames namespace
 
@@ -46,13 +50,15 @@ DWORD __stdcall _XInputGetState(
 	DWORD dwUserIndex,
 	__out XINPUT_STATE* pState)
 {
-	if (!g_proAgent->IsDeviceValid() || dwUserIndex > 0)
+	ProAgent& proAgent = GetProAgent();
+
+	if (!proAgent.IsDeviceValid() || dwUserIndex > 0)
 	{
 		dbgPrint("XInputGetState disconnected %d\n", dwUserIndex);
 		return ERROR_DEVICE_NOT_CONNECTED;
 	}
 
-	const bool result = g_proAgent->GetCachedState(*pState);
+	const bool result = proAgent.GetCachedState(*pState);
 	dbgPrint("XInputGetState %d %04X %08X\n", result, pState->dwPacketNumber, pState->Gamepad.wButtons);
 	return result ? NO_ERROR : static_cast<HRESULT>(-1);
 }
@@ -62,9 +68,11 @@ DWORD __stdcall _XInputSetState(
 	DWORD dwUserIndex,
 	[[maybe_unused]] XINPUT_VIBRATION* pVibration)
 {
+	ProAgent& proAgent = GetProAgent();
+
 	dbgPrint("XInputSetState %d\n", dwUserIndex);
 
-	if (!g_proAgent->IsDeviceValid() || dwUserIndex > 0)
+	if (!proAgent.IsDeviceValid() || dwUserIndex > 0)
 		return ERROR_DEVICE_NOT_CONNECTED;
 
 	return NO_ERROR;
@@ -76,9 +84,11 @@ DWORD __stdcall _XInputGetCapabilities(
 	[[maybe_unused]] DWORD dwFlags,
 	__out XINPUT_CAPABILITIES* pCapabilities)
 {
+	ProAgent& proAgent = GetProAgent();
+
 	dbgPrint("XInputGetCapabilities\n");
 
-	if (!g_proAgent->IsDeviceValid() || dwUserIndex > 0)
+	if (!proAgent.IsDeviceValid() || dwUserIndex > 0)
 		return ERROR_DEVICE_NOT_CONNECTED;
 
 	// values read from a real Xbox One controller connected with USB cable
@@ -112,9 +122,11 @@ DWORD __stdcall _XInputGetAudioDeviceIds(
 	[[maybe_unused]] __out_ecount_opt(*pCaptureCount) LPWSTR pCaptureDeviceId,
 	[[maybe_unused]] __inout_opt UINT* pCaptureCount)
 {
+	ProAgent& proAgent = GetProAgent();
+
 	dbgPrint("XInputGetAudioDeviceIds\n");
 
-	if (!g_proAgent->IsDeviceValid() || dwUserIndex > 0)
+	if (!proAgent.IsDeviceValid() || dwUserIndex > 0)
 		return ERROR_DEVICE_NOT_CONNECTED;
 
 	return ERROR_DEVICE_NOT_CONNECTED;
@@ -126,13 +138,15 @@ DWORD __stdcall _XInputGetBatteryInformation(
 	BYTE devType,
 	__out XINPUT_BATTERY_INFORMATION* pBatteryInformation)
 {
-	if (!g_proAgent->IsDeviceValid() || dwUserIndex > 0 || devType != BATTERY_DEVTYPE_GAMEPAD)
+	ProAgent& proAgent = GetProAgent();
+
+	if (!proAgent.IsDeviceValid() || dwUserIndex > 0 || devType != BATTERY_DEVTYPE_GAMEPAD)
 	{
 		dbgPrint("XInputGetBatteryInformation disconnected %d\n", dwUserIndex);
 		return ERROR_DEVICE_NOT_CONNECTED;
 	}
 
-	const bool result = g_proAgent->GetBatteryInfo(*pBatteryInformation);
+	const bool result = proAgent.GetBatteryInfo(*pBatteryInformation);
 	dbgPrint("XInputGetBatteryInformation %d %02X %02X\n", result, pBatteryInformation->BatteryType, pBatteryInformation->BatteryLevel);
 	return result ? NO_ERROR : static_cast<HRESULT>(-1);
 }
@@ -143,9 +157,11 @@ DWORD __stdcall _XInputGetKeystroke(
 	[[maybe_unused]] __reserved DWORD dwReserved,
 	[[maybe_unused]] __out XINPUT_KEYSTROKE* pKeystroke)
 {
+	ProAgent& proAgent = GetProAgent();
+
 	dbgPrint("XInputGetKeystroke\n");
 
-	if (!g_proAgent->IsDeviceValid() || dwUserIndex > 0)
+	if (!proAgent.IsDeviceValid() || dwUserIndex > 0)
 		return ERROR_DEVICE_NOT_CONNECTED;
 
 	return ERROR_EMPTY;  // we basically don't support this function
@@ -180,12 +196,6 @@ __declspec(dllexport) BOOL __stdcall DllMain(
 		freopen_s(&fp, "CONOUT$", "w+t", stdout);
 		freopen_s(&fp, "CONOUT$", "w+t", stderr);
 #endif
-		g_proAgent = new ProAgent();
-	}
-	else if (fdwReason == DLL_PROCESS_DETACH)
-	{
-		delete g_proAgent;
-		g_proAgent = nullptr;
 	}
 
 	return TRUE;
