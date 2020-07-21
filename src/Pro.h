@@ -34,8 +34,8 @@ public:
 	ProAgent();
 	~ProAgent();
 
-	bool GetCachedState(__out XINPUT_STATE& result) const;
-	bool GetBatteryInfo(__out XINPUT_BATTERY_INFORMATION& result) const;
+	bool GetCachedState(__out XINPUT_STATE& result) const;  // result is always written
+	bool GetBatteryInfo(__out XINPUT_BATTERY_INFORMATION& result) const;  // result is always written
 	bool IsDeviceValid() const;
 
 

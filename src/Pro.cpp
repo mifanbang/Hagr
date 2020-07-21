@@ -446,23 +446,15 @@ bool ProAgent::TryUpdate()
 bool ProAgent::GetCachedState(__out XINPUT_STATE& result) const
 {
 	std::shared_lock lock(m_cachedStates.mutex);
-	if (GetTickCount64() - m_cachedStates.timestamp < k_packetTimeout)
-	{
-		result = m_cachedStates.gamepad;
-		return true;
-	}
-	return false;
+	result = m_cachedStates.gamepad;
+	return (GetTickCount64() - m_cachedStates.timestamp < k_packetTimeout);
 }
 
 bool ProAgent::GetBatteryInfo(__out XINPUT_BATTERY_INFORMATION& result) const
 {
 	std::shared_lock lock(m_cachedStates.mutex);
-	if (GetTickCount64() - m_cachedStates.timestamp < k_packetTimeout)
-	{
-		result = m_cachedStates.battery;
-		return true;
-	}
-	return false;
+	result = m_cachedStates.battery;
+	return (GetTickCount64() - m_cachedStates.timestamp < k_packetTimeout);
 }
 
 bool ProAgent::IsDeviceValid() const
