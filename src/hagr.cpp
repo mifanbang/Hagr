@@ -60,7 +60,7 @@ DWORD __stdcall _XInputGetState(
 
 	const bool result = proAgent.GetCachedState(*pState);
 	dbgPrint("XInputGetState %d %04X %08X\n", result, pState->dwPacketNumber, pState->Gamepad.wButtons);
-	return result ? NO_ERROR : static_cast<HRESULT>(-1);
+	return result ? NO_ERROR : ERROR_TIMEOUT;
 }
 
 
@@ -148,7 +148,7 @@ DWORD __stdcall _XInputGetBatteryInformation(
 
 	const bool result = proAgent.GetBatteryInfo(*pBatteryInformation);
 	dbgPrint("XInputGetBatteryInformation %d %02X %02X\n", result, pBatteryInformation->BatteryType, pBatteryInformation->BatteryLevel);
-	return result ? NO_ERROR : static_cast<HRESULT>(-1);
+	return result ? NO_ERROR : ERROR_TIMEOUT;
 }
 
 

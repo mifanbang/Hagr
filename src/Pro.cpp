@@ -189,7 +189,7 @@ bool WaitForDeviceCommandReply(DeviceIoPipes& pipes, HostSubPacket::CommandCode 
 	return ReadUntil(pipes, [cmd](const Packet& packet) {
 		const bool found = packet.type == PacketType::Device_CommandReply &&
 			packet.GetSubPacket<PacketType::Device_CommandReply>().cmdCode == cmd;
-		return !found;  // return true for continue reading
+		return !found;  // return true to continue reading
 	} );
 }
 
@@ -199,7 +199,7 @@ bool WaitForDeviceSubcommandReply(DeviceIoPipes& pipes, HostSubPacket::Subcomman
 	return ReadUntil(pipes, [subcmd](const Packet& packet) {
 		const bool found = packet.type == PacketType::Device_SubcommandReply &&
 			packet.GetSubPacket<PacketType::Device_SubcommandReply>().subcmdCode == subcmd;
-		return !found;  // return true for continue reading
+		return !found;  // return true to continue reading
 	} );
 }
 
