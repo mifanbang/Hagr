@@ -24,6 +24,7 @@
 #endif  // _DEBUG
 
 #include <windows.h>
+#include <hidusage.h>
 #include <xinput.h>
 
 #include "Pro.h"
@@ -33,11 +34,28 @@
 namespace
 {
 
+
+// Unity may be pulling data from raw input interface provided by User32.dll.
+// it may thus interfere with Hagr so we must disable it.
+class RawInputDisabler
+{
+public:
+	RawInputDisabler()
+	{
+		// unregister raw input for joystick devices (HID code of Pro is a joystick rather than a gamepad)
+		RAWINPUTDEVICE inputDev { HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_JOYSTICK, RIDEV_REMOVE, nullptr };
+		RegisterRawInputDevices(&inputDev, 1, sizeof(inputDev));
+	}
+};
+
+
 ProAgent& GetProAgent()
 {
+	static RawInputDisabler s_rawInputDisabler;
 	static ProAgent s_proAgent;
 	return s_proAgent;
 }
+
 
 }  // unnames namespace
 
