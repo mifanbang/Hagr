@@ -28,11 +28,12 @@ Hagr is an experimental project. I hope it works for as many use cases as possib
 - Vibration via `XInputSetState()` is currently not implemented.
 - There's no guarantee that every game using XInput will load the DLLs. Some games have unique ways to start up. 
 
-## An Incomplete List of Working Games
+## An Incomplete List of Compatible Games
 
 This is a non-exhaustive list. It only shows those that have been tested by me. 
 
 - Borderlands 3 (64-bit; in `OakGame/Binaries/Win64/` folder)
+- Cuphead (32-bit)
 - Overwatch (64-bit; in `_retail_/` folder)
 
 ## TODO List
