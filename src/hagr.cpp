@@ -76,9 +76,17 @@ DWORD __stdcall _XInputGetState(
 		return ERROR_DEVICE_NOT_CONNECTED;
 	}
 
+	proAgent.WaitForFirstCachedState();
+
 	const bool result = proAgent.GetCachedState(*pState);
 	dbgPrint("XInputGetState %d %04X %08X\n", result, pState->dwPacketNumber, pState->Gamepad.wButtons);
-	return result ? NO_ERROR : ERROR_TIMEOUT;
+
+	// some games stop pulling states once an non-zero value is returned.
+	// thus for the cases of no available cached states while device is connected,
+	// we'd want to still report a success but return a neutral gamepad state.
+	if (!result)
+		ZeroMemory(pState, sizeof(*pState));
+	return NO_ERROR;
 }
 
 
@@ -164,9 +172,18 @@ DWORD __stdcall _XInputGetBatteryInformation(
 		return ERROR_DEVICE_NOT_CONNECTED;
 	}
 
+	proAgent.WaitForFirstCachedState();
+
 	const bool result = proAgent.GetBatteryInfo(*pBatteryInformation);
 	dbgPrint("XInputGetBatteryInformation %d %02X %02X\n", result, pBatteryInformation->BatteryType, pBatteryInformation->BatteryLevel);
-	return result ? NO_ERROR : ERROR_TIMEOUT;
+
+	// for the same reason as in XInputGetState(), we fake the battery state
+	if (!result)
+	{
+		pBatteryInformation->BatteryType = BATTERY_TYPE_NIMH;
+		pBatteryInformation->BatteryLevel = BATTERY_LEVEL_MEDIUM;
+	}
+	return NO_ERROR;
 }
 
 

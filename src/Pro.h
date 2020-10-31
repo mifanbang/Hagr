@@ -34,9 +34,11 @@ public:
 	ProAgent();
 	~ProAgent();
 
-	bool GetCachedState(__out XINPUT_STATE& result) const;  // result is always written
+	bool GetCachedState(__out XINPUT_STATE& result) const;  // result is always written.
 	bool GetBatteryInfo(__out XINPUT_BATTERY_INFORMATION& result) const;  // result is always written
+
 	bool IsDeviceValid() const;
+	bool WaitForFirstCachedState() const;  // block until the first cached state becomes available or controller disconnects
 
 
 private:
@@ -65,6 +67,7 @@ private:
 	CachedStates m_cachedStates;
 
 	std::unique_ptr<std::thread> m_workerThread;
-	volatile bool m_workerStopSignal;
+	volatile bool m_workerStopSignal : 1;
+	volatile bool m_deviceTriedFirstPull : 1;  // reset by ReattachToDevice()
 };
 

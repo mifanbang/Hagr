@@ -47,6 +47,7 @@ constexpr DeviceIoPipes::PipeParams k_pipeParams = { 128, 64 };  // read = 128 B
 constexpr unsigned int k_pullInterval = 15;  // ms; ~60 ticks per second seem like Pro's spec
 constexpr uint64_t k_packetTimeout = 100;  // ms; for how long the cached states are considered invalid and controller disconnected
 constexpr std::chrono::milliseconds k_cmdReplyTimeout(400);  // for how long we wait for device to reply to a certain command
+constexpr uint8_t k_batteryType = BATTERY_TYPE_NIMH;  // doesn't really matter so we hard-code this
 
 
 template <typename F>
@@ -295,7 +296,7 @@ public:
 		outputStates.Gamepad.wButtons |= IsSet(buttons, Buttons::Left) ? XINPUT_GAMEPAD_DPAD_LEFT : 0;
 		outputStates.Gamepad.wButtons |= IsSet(buttons, Buttons::L) ? XINPUT_GAMEPAD_LEFT_SHOULDER : 0;
 
-		outputBattery.BatteryType = BATTERY_TYPE_NIMH;  // doesn't really matter so we hard-code this
+		outputBattery.BatteryType = k_batteryType;
 		outputBattery.BatteryLevel = DecodeBatteryLevel(gameStates.batteryAndWired);
 	}
 
@@ -373,11 +374,13 @@ ProAgent::CachedStates::CachedStates()
 	ZeroMemory(&battery, sizeof(battery));
 }
 
+
 ProAgent::ProAgent()
 	: m_devPipes(OpenDevice(FindDevicePath()), k_pipeParams)
 	, m_cachedStates()
 	, m_workerThread()
 	, m_workerStopSignal(false)
+	, m_deviceTriedFirstPull(false)
 {
 	InitWorkerThread();
 }
@@ -430,6 +433,7 @@ bool ProAgent::TryUpdate()
 			std::unique_lock lock(m_cachedStates.mutex);
 			m_cachedStates.timestamp = GetTickCount64();
 			PacketAdaptor::Translate(*packet, m_cachedStates.gamepad, m_cachedStates.battery);
+			m_deviceTriedFirstPull = true;
 		}
 
 		// handle failed read operation only after caching states
@@ -462,6 +466,18 @@ bool ProAgent::IsDeviceValid() const
 	return m_devPipes.IsFileValid();
 }
 
+// return true if cached state is available in the end.
+// cannot be called on a worker thread.
+bool ProAgent::WaitForFirstCachedState() const
+{
+	// the spinning loop relies on TryUpdate() properly checking packet time-out interval
+	// or it could block forever.
+	while (!m_deviceTriedFirstPull && m_devPipes.IsFileValid())
+		;  // spin
+
+	return m_deviceTriedFirstPull;
+}
+
 void ProAgent::InitWorkerThread()
 {
 	if (m_workerThread)
@@ -473,14 +489,17 @@ void ProAgent::InitWorkerThread()
 
 bool ProAgent::ReattachToDevice()
 {
+	m_deviceTriedFirstPull = false;
+
 	if (AutoHandle newDeviceFile = OpenDevice(FindDevicePath()))
 	{
 		DeviceIoPipes newDevicePipes(std::move(newDeviceFile), k_pipeParams);
 		m_devPipes = std::move(newDevicePipes);
 		if (!WaitForDeviceFullStatesPacket(m_devPipes))
 		{
-			m_devPipes.CancelRead();
-			InitDevice();
+			// controller is not in an initialized state. have to reinitialize.
+			m_devPipes.CancelRead();  // cancel previous async read op
+			return InitDevice();
 		}
 
 		return true;
