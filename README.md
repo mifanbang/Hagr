@@ -34,7 +34,10 @@ This is a non-exhaustive list. It only shows those that have been tested by me.
 
 - Borderlands 3 (64-bit; in `OakGame/Binaries/Win64/` folder)
 - Cuphead (32-bit)
+- Limbo (32-bit)
+- Metal Gear Solid V: Ground Zeroes (64-bit)
 - Overwatch (64-bit; in `_retail_/` folder)
+- Stela (64-bit; in `Stela/Binaries/Win64/` folder)
 
 ## TODO List
 
