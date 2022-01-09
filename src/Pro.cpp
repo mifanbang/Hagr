@@ -69,7 +69,6 @@ public:
 	{
 		assert(m_count > 0);
 		const auto result = m_func(std::forward<Args>(args)...);
-		const auto lastCount = m_count;
 		--m_count;
 		return result;
 	}

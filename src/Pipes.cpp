@@ -113,7 +113,7 @@ unsigned int Pipe::GetBufferSize() const
 bool Pipe::IsValid() const
 {
 	const auto isOverlappedValid = static_cast<bool>(m_overlapped);
-	const auto isBufferValid = static_cast<bool>(m_buffer);
+	[[maybe_unused]] const auto isBufferValid = static_cast<bool>(m_buffer);
 	assert(isOverlappedValid == isBufferValid);
 	return isOverlappedValid;
 }
